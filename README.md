@@ -5,7 +5,7 @@
 ## 安装
 
 ```sh
-git clone git@github.com:uiautodev-plugins/adb-connect.git ~/.uiautodev/plugins/adb-connect
+git clone https://github.com/uiautodev-plugins/adb-connect.git ~/.uiautodev/plugins/adb-connect
 ```
 
 ## 使用
