@@ -1,22 +1,94 @@
 <html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --text: #111827;
+      --muted: #6b7280;
+      --input-bg: transparent;
+      --input-border: #d1d5db;
+      --input-text: #111827;
+      --placeholder: #9ca3af;
+      --error: #ef4444;
+    }
+    html.dark {
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --input-bg: transparent;
+      --input-border: #4b5563;
+      --input-text: #f9fafb;
+      --placeholder: #6b7280;
+      --error: #f87171;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: transparent;
+    }
+    body {
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+        "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .error { color: var(--error); margin-top: 8px; font-size: 14px; }
+    .cmd-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .cmd-input {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--input-text);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      outline: none;
+      cursor: text;
+    }
+    .cmd-input::placeholder { color: var(--placeholder); }
+    .cmd-input:focus { border-color: #3b82f6; }
+    .copy-btn {
+      flex: none;
+      padding: 0 12px;
+      height: 32px;
+      font-size: 13px;
+      color: #ffffff;
+      background: var(--copy-accent, #111827);
+      border: 1px solid var(--copy-accent, #111827);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+    .copy-btn:hover { opacity: 0.85; }
+    .copy-btn:active { opacity: 0.7; }
+    .copy-btn.copied { background: #16a34a; border-color: #16a34a; }
+    .runtime { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
 <body>
   <div id="app">
-    <div v-if="error" class="text-red-500 mt-2">{{ error }}</div>
+    <div v-if="error" class="error">{{ error }}</div>
     <div v-else>
-      <input 
-        class="w-full pl-2 p-1 border border-gray-300 rounded" 
-        type="text" 
-        v-model="shellCommand" 
-        placeholder="ADB Address"
-        @click="selectAllText"
-        readonly>
-      <div class="text-gray-500 text-sm mt-1">
-        运行时间: {{ formattedRuntime }}
+      <div class="cmd-row">
+        <input
+          class="cmd-input"
+          type="text"
+          v-model="shellCommand"
+          placeholder="ADB Address"
+          readonly>
+        <button class="copy-btn" :class="{ copied }" @click="copyCommand" title="复制">{{ copied ? '已复制' : '复制' }}</button>
       </div>
+      <div class="runtime">运行时间: {{ formattedRuntime }}</div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   <script>
     new Vue({
@@ -24,6 +96,7 @@
       data: {
         adbAddress: "",
         error: "",
+        copied: false,
         refreshInterval: null,
         startTime: Date.now(),
         currentTime: Date.now()
@@ -62,14 +135,22 @@
             this.adbAddress = "";
           }
         },
-        selectAllText() {
-          // 获取input元素并全选文本
-          this.$nextTick(() => {
+        async copyCommand() {
+          const text = this.shellCommand;
+          if (!text) return;
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch (err) {
             const input = document.querySelector('input');
             if (input) {
               input.select();
+              document.execCommand('copy');
             }
-          });
+          }
+          this.copied = true;
+          setTimeout(() => {
+            this.copied = false;
+          }, 1500);
         }
       },
       computed: {
