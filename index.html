@@ -20,11 +20,6 @@
       --icon: #4b5563;
       --icon-hover-bg: rgba(17, 24, 39, 0.06);
       --icon-active-bg: rgba(17, 24, 39, 0.11);
-
-      --success: #15803d;
-      --success-bg: rgba(22, 163, 74, 0.12);
-      --failure: #dc2626;
-      --failure-bg: rgba(220, 38, 38, 0.12);
     }
     html.dark {
       --text: #f3f4f6;
@@ -43,11 +38,6 @@
       --icon: #9ca3af;
       --icon-hover-bg: rgba(255, 255, 255, 0.08);
       --icon-active-bg: rgba(255, 255, 255, 0.14);
-
-      --success: #4ade80;
-      --success-bg: rgba(74, 222, 128, 0.14);
-      --failure: #f87171;
-      --failure-bg: rgba(248, 113, 113, 0.14);
     }
 
     * { box-sizing: border-box; }
@@ -111,8 +101,6 @@
       outline: 2px solid var(--focus-border);
       outline-offset: -2px;
     }
-    .copy-btn.is-success { color: var(--success); background: var(--success-bg); }
-    .copy-btn.is-error { color: var(--failure); background: var(--failure-bg); }
     .copy-btn svg { display: block; }
     .sr-only {
       position: absolute;
@@ -141,7 +129,6 @@
           readonly>
         <button
           class="copy-btn"
-          :class="{ 'is-success': copyState === 'success', 'is-error': copyState === 'error' }"
           type="button"
           @click="copyCommand"
           title="复制"
