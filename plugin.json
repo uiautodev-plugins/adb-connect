@@ -1,7 +1,7 @@
 {
   "name": "Adb Connect",
   "description": "generate adb connect address",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "index.html",
   "platforms": ["android"]
 }
