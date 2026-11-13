@@ -11,6 +11,8 @@
       --input-text: #111827;
       --placeholder: #9ca3af;
       --error: #ef4444;
+      --copy-accent: #111827;
+      --copy-fg: #ffffff;
     }
     html.dark {
       --text: #f9fafb;
@@ -20,6 +22,8 @@
       --input-text: #f9fafb;
       --placeholder: #6b7280;
       --error: #f87171;
+      --copy-accent: #f9fafb;
+      --copy-fg: #111827;
     }
 
     * { box-sizing: border-box; }
@@ -56,19 +60,23 @@
     .cmd-input:focus { border-color: #3b82f6; }
     .copy-btn {
       flex: none;
-      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
       height: 32px;
-      font-size: 13px;
-      color: #ffffff;
-      background: var(--copy-accent, #111827);
-      border: 1px solid var(--copy-accent, #111827);
+      padding: 0;
+      color: var(--copy-fg);
+      background: var(--copy-accent);
+      border: 1px solid var(--copy-accent);
       border-radius: 8px;
       cursor: pointer;
       transition: opacity 0.15s ease;
     }
     .copy-btn:hover { opacity: 0.85; }
     .copy-btn:active { opacity: 0.7; }
-    .copy-btn.copied { background: #16a34a; border-color: #16a34a; }
+    .copy-btn svg { display: block; }
+    .copy-icon { font-size: 15px; line-height: 1; }
     .runtime { color: var(--muted); font-size: 12px; margin-top: 8px; }
   </style>
 </head>
@@ -83,7 +91,31 @@
           v-model="shellCommand"
           placeholder="ADB Address"
           readonly>
-        <button class="copy-btn" :class="{ copied }" @click="copyCommand" title="复制">{{ copied ? '已复制' : '复制' }}</button>
+        <button
+          class="copy-btn"
+          type="button"
+          @click="copyCommand"
+          title="复制"
+          aria-label="复制">
+          <svg
+            v-if="copyState === 'idle'"
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span v-else-if="copyState === 'success'" class="copy-icon" aria-hidden="true">✅</span>
+          <span v-else class="copy-icon" aria-hidden="true">❌</span>
+        </button>
       </div>
       <div class="runtime">运行时间: {{ formattedRuntime }}</div>
     </div>
@@ -96,7 +128,8 @@
       data: {
         adbAddress: "",
         error: "",
-        copied: false,
+        copyState: "idle",
+        copyTimer: null,
         refreshInterval: null,
         startTime: Date.now(),
         currentTime: Date.now()
@@ -138,18 +171,35 @@
         async copyCommand() {
           const text = this.shellCommand;
           if (!text) return;
-          try {
-            await navigator.clipboard.writeText(text);
-          } catch (err) {
-            const input = document.querySelector('input');
-            if (input) {
-              input.select();
-              document.execCommand('copy');
+          const copied = await this.copyText(text);
+          this.setCopyState(copied ? "success" : "error");
+        },
+        async copyText(text) {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+              await navigator.clipboard.writeText(text);
+              return true;
+            } catch (err) {
+              // Fall back to execCommand below.
             }
           }
-          this.copied = true;
-          setTimeout(() => {
-            this.copied = false;
+          try {
+            const input = document.querySelector('.cmd-input');
+            if (!input) return false;
+            input.select();
+            return document.execCommand('copy');
+          } catch (err) {
+            return false;
+          }
+        },
+        setCopyState(state) {
+          if (this.copyTimer) {
+            clearTimeout(this.copyTimer);
+          }
+          this.copyState = state;
+          this.copyTimer = setTimeout(() => {
+            this.copyState = "idle";
+            this.copyTimer = null;
           }, 1500);
         }
       },
@@ -190,6 +240,9 @@
         }
         if (this.timeInterval) {
           clearInterval(this.timeInterval);
+        }
+        if (this.copyTimer) {
+          clearTimeout(this.copyTimer);
         }
       }
     })
